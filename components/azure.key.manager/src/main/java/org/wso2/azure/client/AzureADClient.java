@@ -1,3 +1,20 @@
+/*
+ * Copyright © 2022 WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *http://www.apache.org/licenses/LICENSE-2.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.azure.client;
 
 import java.util.Collections;
@@ -23,17 +40,19 @@ import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.KMClientErrorDecoder;
 import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import feign.Feign;
 import feign.Feign.Builder;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class AzureADClient extends AbstractKeyManager {
+
+    private static final Log log = LogFactory.getLog(AzureADClient.class);
+
     /***
      * Application related API calls
      */
@@ -80,12 +99,19 @@ public class AzureADClient extends AbstractKeyManager {
             ClientInformation appInfo = this.getClientInformation(oauthAppInfo);
             ClientInformation app;
 
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Creating application : %s:", appInfo.toString()));
+            }
+
             try {
                 app = appClient.createApplication(appInfo);
+
                 if (app != null) {
                     PasswordInfo pInfo = this.setPassword(app.getId());
                     app.setClientSecret(pInfo.getSecret());
                     return getOAuthApplicationInfo(app);
+                } else {
+                    throw new APIManagementException("Client Application creation failed");
                 }
             } catch (KeyManagerClientException e) {
                 handleException("Error occurred while creating Azure AD Application", e);
@@ -124,15 +150,19 @@ public class AzureADClient extends AbstractKeyManager {
     private ClientInformation getClientInformation(OAuthApplicationInfo oauthAppInfo) {
         ClientInformation clientInformation = new ClientInformation();
         clientInformation.setAppName(oauthAppInfo.getClientName());
-        String id = (String) oauthAppInfo.getParameter(AzureADConstants.OBJECT_ID);
-        if (id != null)
-            clientInformation.setId(id);
+        Object id = oauthAppInfo.getParameter(AzureADConstants.OBJECT_ID);
+        if (id != null) {
+            String idString = (String) id;
+            clientInformation.setId(idString);
+        }
 
-        if (oauthAppInfo.getClientId() != null)
+        if (oauthAppInfo.getClientId() != null) {
             clientInformation.setClientId(oauthAppInfo.getClientId());
+        }
 
-        if (oauthAppInfo.getClientSecret() != null)
+        if (oauthAppInfo.getClientSecret() != null) {
             clientInformation.setClientSecret(oauthAppInfo.getClientSecret());
+        }
 
         return clientInformation;
     }
@@ -140,9 +170,14 @@ public class AzureADClient extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo updateApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
         OAuthApplicationInfo oauthAppInfo = oauthAppRequest.getOAuthApplicationInfo();
+
         if (oauthAppInfo != null) {
             ClientInformation appInfo = this.getClientInformation(oauthAppInfo);
             String id = appInfo.getId();
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Updating application : %s:", appInfo.toString()));
+            }
 
             try {
                 // Update, Client does not send a body. 204 Status only
@@ -166,7 +201,6 @@ public class AzureADClient extends AbstractKeyManager {
             try {
                 appClient.deleteApplication(client.getId());
             } catch (KeyManagerClientException e) {
-                e.printStackTrace();
                 handleException("Error occurred while deleting Azure AD Application", e);
             }
         }
@@ -176,10 +210,10 @@ public class AzureADClient extends AbstractKeyManager {
         ClientInformation client = null;
         try {
             ClientInformationList list = appClient.searchByAppId(clientId);
-            if (list != null && list.getValue().size() > 0)
+            if (list != null && list.getValue().size() > 0) {
                 client = list.getValue().get(0);
+            }
         } catch (KeyManagerClientException e1) {
-            e1.printStackTrace();
             handleException("Error occurred while searching Azure AD Application", e1);
         }
         return client;
@@ -203,17 +237,6 @@ public class AzureADClient extends AbstractKeyManager {
         return tokenGenerator.getAccessTokenInfo(clientId, clientSecret, tokenEndpoint);
     }
 
-    protected void clearTest() throws KeyManagerClientException {
-        ClientInformationList allTestApplications = this.appClient.getAllTestApplications();
-        allTestApplications.getValue().forEach(v -> {
-            try {
-                this.appClient.deleteApplication(v.getId());
-            } catch (KeyManagerClientException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
         return this.configuration;
@@ -229,7 +252,6 @@ public class AzureADClient extends AbstractKeyManager {
             if (clientInfo == null) {
                 String msg = "Something went wrong while getting OAuth application for given consumer key "
                         + consumerKey;
-                log.error(msg);
                 throw new APIManagementException(msg);
             }
 

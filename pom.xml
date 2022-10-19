@@ -1,3 +1,20 @@
+<!-- 
+Copyright © 2022 WSO2 LLC. (http://www.wso2.com).
+
+WSO2 LLC. licenses this file to you under the Apache License,
+Version 2.0 (the "License"); you may not use this file except
+in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+ -->
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -43,6 +60,50 @@
           <groupId>org.wso2.maven</groupId>
           <artifactId>carbon-p2-plugin</artifactId>
           <version>${carbon.p2.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${maven.checkstyle.plugin.version}</version>
+          <executions>
+            <execution>
+              <id>validate</id>
+              <phase>compile</phase>
+              <configuration>
+                <configLocation>checkstyle/checkstyle.xml</configLocation>
+                <suppressionsLocation>checkstyle/suppressions.xml</suppressionsLocation>
+                <encoding>UTF-8</encoding>
+                <consoleOutput>true</consoleOutput>
+                <failsOnError>true</failsOnError>
+                <includeTestSourceDirectory>true</includeTestSourceDirectory>
+              </configuration>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>${maven.spotbugsplugin.version}</version>
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Low</threshold>
+            <xmlOutput>true</xmlOutput>
+            <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory>
+            <!--Exclude sources-->
+            <!--<excludeFilterFile>${maven.spotbugsplugin.exclude.file}</excludeFilterFile>-->
+          </configuration>
+          <executions>
+            <execution>
+              <id>analyze-compile</id>
+              <phase>compile</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -108,7 +169,7 @@
     <repository>
       <id>wso2-nexus</id>
       <name>WSO2 internal Repository</name>
-      <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+      <url>https://maven.wso2.org/nexus/content/groups/wso2-public/</url>
       <releases>
         <enabled>true</enabled>
         <updatePolicy>daily</updatePolicy>
@@ -118,7 +179,7 @@
     <repository>
       <id>wso2.releases</id>
       <name>WSO2 internal Repository</name>
-      <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+      <url>https://maven.wso2.org/nexus/content/repositories/releases/</url>
       <releases>
         <enabled>true</enabled>
         <updatePolicy>daily</updatePolicy>
@@ -128,7 +189,7 @@
     <repository>
       <id>wso2.snapshots</id>
       <name>Apache Snapshot Repository</name>
-      <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
+      <url>https//maven.wso2.org/nexus/content/repositories/snapshots/</url>
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>daily</updatePolicy>
@@ -179,12 +240,12 @@
     <repository>
       <id>nexus-releases</id>
       <name>WSO2 Release Distribution Repository</name>
-      <url>http://maven.wso2.org/nexus/service/local/staging/deploy/maven2/</url>
+      <url>https://maven.wso2.org/nexus/service/local/staging/deploy/maven2/</url>
     </repository>
     <snapshotRepository>
       <id>wso2.snapshots</id>
       <name>Apache Snapshot Repository</name>
-      <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
+      <url>https://maven.wso2.org/nexus/content/repositories/snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 </project>

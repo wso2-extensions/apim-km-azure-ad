@@ -1,14 +1,31 @@
+/*
+ * Copyright © 2022 WSO2 LLC. (http://www.wso2.com).
+ *
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *http://www.apache.org/licenses/LICENSE-2.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.azure.client;
 
 import java.io.IOException;
 
 import org.wso2.azure.client.model.AccessTokenResponse;
+import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 
 import com.google.gson.Gson;
 
-import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -16,9 +33,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-@Slf4j
 public class TokenGenerator {
-    protected AccessTokenResponse getAccessToken(String clientId, String clientSecret, String tokenEndpoint) {
+
+    protected AccessTokenResponse getAccessToken(String clientId, String clientSecret, String tokenEndpoint)
+            throws APIManagementException {
         OkHttpClient client = new OkHttpClient();
         FormBody.Builder formBuilder = new FormBody.Builder();
         formBuilder.add(APIConstants.JSON_CLIENT_ID, clientId);
@@ -36,14 +54,12 @@ public class TokenGenerator {
         try (Response response = call.execute()) {
             return new Gson().fromJson(response.body().string(), AccessTokenResponse.class);
         } catch (IOException e) {
-            // e.printStackTrace();
-            log.error(e.getMessage());
+            throw new APIManagementException("Error Getting access token for clientId " + clientId);
         }
-
-        return null;
     }
 
-    protected AccessTokenInfo getAccessTokenInfo(String clientId, String clientSecret, String tokenEndpoint) {
+    protected AccessTokenInfo getAccessTokenInfo(String clientId, String clientSecret, String tokenEndpoint)
+            throws APIManagementException {
         AccessTokenResponse tokenResp = this.getAccessToken(clientId, clientSecret, tokenEndpoint);
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
         if (tokenResp != null) {
