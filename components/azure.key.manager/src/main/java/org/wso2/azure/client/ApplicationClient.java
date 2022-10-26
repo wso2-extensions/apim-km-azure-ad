@@ -26,6 +26,9 @@ import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
+/***
+ * Client for communicating with Microsoft Graph API v1.0
+ */
 public interface ApplicationClient {
 
 	@RequestLine("POST /v1.0/applications")

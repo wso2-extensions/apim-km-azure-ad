@@ -13,7 +13,7 @@ Execute the following command from the project's root directory to build
 Linux/ MACOS
 
 ```sh
-./mvnw clean install
+mvn clean install
 ```
 
 Windows
