@@ -40,7 +40,8 @@ public interface ApplicationClient {
 	public ClientInformation getApplication(@Param("id") String id) throws KeyManagerClientException;
 
 	/***
-	 * id - ObjectId (NOT clientId)
+	 * @param id Application ID
+	 * @throws KeyManagerClientException If application deletion failed
 	 */
 	@RequestLine("DELETE /v1.0/applications/{id}")
 	public void deleteApplication(@Param("id") String id) throws KeyManagerClientException;
@@ -48,8 +49,8 @@ public interface ApplicationClient {
 	/***
 	 * 
 	 * @param id this is the clientId of the application
-	 * @return
-	 * @throws KeyManagerClientException
+	 * @return Client information
+	 * @throws KeyManagerClientException If search by app id failed
 	 */
 	@RequestLine("GET /v1.0/applications?$search=\"appId:{appId}\"&ConsistencyLevel=eventual")
 	@Headers("ConsistencyLevel: eventual")
@@ -57,9 +58,8 @@ public interface ApplicationClient {
 
 	/***
 	 * 
-	 * @param id this is the clientId of the application
-	 * @return
-	 * @throws KeyManagerClientException
+	 * @return Client Information
+	 * @throws KeyManagerClientException If get test applications failed
 	 */
 	@RequestLine("GET /v1.0/applications?$search=\"displayName:TEST\"&ConsistencyLevel=eventual&$select=id")
 	@Headers("ConsistencyLevel: eventual")
