@@ -15,5 +15,5 @@
 # under the License.
 
 ./mvnw clean install
-cp components/azure.key.manager/target/manager-1.0-SNAPSHOT.jar dockerfiles/apim/
+cp components/azure.key.manager/target/azure.key.manager-1.0.0-SNAPSHOT.jar dockerfiles/apim/
 docker-compose up --build

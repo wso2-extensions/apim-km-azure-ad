@@ -26,12 +26,15 @@ public class AzureADConstants {
     public static final String GRAPH_API_ENDPOINT = "microsoft_graph_api_endpoint";
     public static final String GRAPH_API_ENDPOINT_VALUE = "https://graph.microsoft.com";
     public static final String GRAPH_API_ENDPOINT_VERSION = "v1.0";
-    public static final String APP_ID = "appid";
+    // public static final String APP_ID = "appid";
+    public static final String AZP = "azp";
     public static final String OBJECT_ID = "id";
     public static final String AD_APP_CLIENT_ID = "azure_ad_client_id";
     public static final String AD_APP_CLIENT_SECRET = "azure_ad_client_secret";
     public static final String AD_APP_TENANT = "azure_ad_tenant";
     public static final String MICROSOFT_DEFAULT_SCOPE = "https://graph.microsoft.com/.default";
+    public static final String API_ID_URI_TEMPLATE = "api://%s";
+    public static final String API_SCOPE_TEMPLATE = "api://%s/.default";
 
     public static final String GRANT_TYPE = "grant_type";
     public static final String SCOPE = "scope";
