@@ -78,7 +78,7 @@ public class AzureADConnectorConfiguration implements KeyManagerConnectorConfigu
 
     @Override
     public String getDefaultConsumerKeyClaim() {
-        return AzureADConstants.APP_ID;
+        return AzureADConstants.AZP;
     }
 
     @Override

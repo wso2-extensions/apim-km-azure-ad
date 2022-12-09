@@ -53,6 +53,19 @@ Create secrets
 - Fill the form with relevant information and give custom as the value for Expire.
 - Make sure to copy the secret,it only shows once.
 
+Configured permissions
+
+- Navigate to `API permissions`
+- Click `Add a permissions`
+- Select `APIs my organization uses`
+- Select `Microsoft Graph` from the list
+- Click on `Application permissions`
+- Expand `Application` and check
+  - Application.Read.All
+  - Application.ReadWrite.All
+  - Application.ReadWrite.OwnedBy
+- Click `Add permissions`
+
 Copy application details
 
 - Navigate to [Manage Azure Active Directory](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview)
@@ -99,14 +112,19 @@ Next, log-in to the Devportal and navigate to `Applications` section
 - Once created, navigate to the `Production Keys` section of that Application
 - Select the `Azure AD Key Manager` and click on `Generate Keys`
 
-## Quick Test
+### Post checks
 
-Make sure docker and docker-compose are installed.
-Update components/azure.key.manager/src/test/java/org/wso2/azure/client/AzureAdValues.java with values obtain from the setup.
+Under [App registration](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps) there should be newly created application.
 
-```sh
-sh test.sh
+If we are using existing app registered. Make sure to check the `Expose an API` section and we have setup `Application ID URI`. The value should be
+
+```code
+api://<Application (client) ID>
 ```
+
+We can also get this value by clicking the `set` link right next to the label. Default value is what we will see above.
+
+Without this in the app,the token will be generate in a version 1 format and will not work with APIM KM due to failed signature.
 
 ## License
 

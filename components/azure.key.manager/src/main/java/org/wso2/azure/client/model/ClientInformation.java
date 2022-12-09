@@ -30,6 +30,9 @@ public class ClientInformation {
     @SerializedName("displayName")
     private String appName;
 
+    @SerializedName("identifierUris")
+    private String[] identifierUris;
+
     private String clientSecret;
 
     public String getId() {
@@ -62,6 +65,14 @@ public class ClientInformation {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public String[] getIdentifierUris() {
+        return identifierUris;
+    }
+
+    public void setIdentifierUris(String[] identifierUris) {
+        this.identifierUris = identifierUris;
     }
 
     @Override

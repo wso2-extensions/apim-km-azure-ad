@@ -42,9 +42,10 @@ public class TokenGenerator {
         formBuilder.add(APIConstants.JSON_CLIENT_ID, clientId);
         formBuilder.add(APIConstants.JSON_CLIENT_SECRET, clientSecret);
         formBuilder.add(AzureADConstants.GRANT_TYPE, AzureADConstants.CLIENT_CREDENTIALS_GRANT_TYPE);
-        formBuilder.add(AzureADConstants.SCOPE, AzureADConstants.MICROSOFT_DEFAULT_SCOPE);
+        formBuilder.add(AzureADConstants.SCOPE, String.format(AzureADConstants.API_SCOPE_TEMPLATE, clientId));
 
         RequestBody formBody = formBuilder.build();
+
         Request request = new Request.Builder()
                 .url(tokenEndpoint)
                 .post(formBody)
@@ -66,7 +67,7 @@ public class TokenGenerator {
             tokenInfo.setConsumerKey(clientId);
             tokenInfo.setConsumerSecret(clientSecret);
             tokenInfo.setAccessToken(tokenResp.getAccessToken());
-            tokenInfo.setScope(new String[] { AzureADConstants.MICROSOFT_DEFAULT_SCOPE });
+            tokenInfo.setScope(tokenInfo.getScopes());
             tokenInfo.setValidityPeriod(tokenResp.getExpiry());
             return tokenInfo;
         }

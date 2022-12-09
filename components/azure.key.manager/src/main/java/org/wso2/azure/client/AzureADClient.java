@@ -105,10 +105,14 @@ public class AzureADClient extends AbstractKeyManager {
 
             try {
                 app = appClient.createApplication(appInfo);
-
                 if (app != null) {
+                    // Set password
                     PasswordInfo pInfo = this.setPassword(app.getId());
                     app.setClientSecret(pInfo.getSecret());
+
+                    // update Application ID URI, Otherwise the token will be in v1.
+                    this.updateApplicationIDURI(app.getId(), app.getClientId());
+
                     return getOAuthApplicationInfo(app);
                 } else {
                     throw new APIManagementException("Client Application creation failed");
@@ -132,11 +136,22 @@ public class AzureADClient extends AbstractKeyManager {
         return appClient.addPassword(id, passwordInfo);
     }
 
+    private void updateApplicationIDURI(String id, String appId) throws KeyManagerClientException {
+        ClientInformation info = new ClientInformation();
+        // Need to create Application ID URI. Used in default scope and
+        String applicationIdUri = String.format(AzureADConstants.API_ID_URI_TEMPLATE, appId);
+        info.setIdentifierUris(new String[] { applicationIdUri });
+        appClient.updateApplication(id, info);
+    }
+
     private OAuthApplicationInfo getOAuthApplicationInfo(ClientInformation appInfo) {
         OAuthApplicationInfo oauthAppInfo = new OAuthApplicationInfo();
         oauthAppInfo.setClientName(appInfo.getAppName());
         oauthAppInfo.setClientId(appInfo.getClientId());
-        oauthAppInfo.setClientSecret(appInfo.getClientSecret());
+
+        if (appInfo.getClientSecret() != null) {
+            oauthAppInfo.setClientSecret(appInfo.getClientSecret());
+        }
 
         oauthAppInfo.addParameter(ApplicationConstants.OAUTH_CLIENT_GRANT,
                 AzureADConstants.CLIENT_CREDENTIALS_GRANT_TYPE);
@@ -245,7 +260,6 @@ public class AzureADClient extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         String consumerKey = oAuthAppRequest.getOAuthApplicationInfo().getClientId();
-        String consumerSecret = oAuthAppRequest.getOAuthApplicationInfo().getClientSecret();
 
         if (StringUtils.isNotBlank(consumerKey)) {
             OAuthApplicationInfo clientInfo = retrieveApplication(consumerKey);
@@ -253,10 +267,6 @@ public class AzureADClient extends AbstractKeyManager {
                 String msg = "Something went wrong while getting OAuth application for given consumer key "
                         + consumerKey;
                 throw new APIManagementException(msg);
-            }
-
-            if (StringUtils.isNotBlank(consumerSecret) && !consumerSecret.equals(clientInfo.getClientSecret())) {
-                throw new APIManagementException("The secret key is wrong for the given consumer key " + consumerKey);
             }
 
             return oAuthAppRequest.getOAuthApplicationInfo();

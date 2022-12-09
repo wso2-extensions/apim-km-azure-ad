@@ -22,9 +22,11 @@ services:
   apim:
     build: ./dockerfiles/apim
     container_name: api-manager-ad-test
+    # command: ["-debug *:5005"]
     ports:
       - 9443:9443
       - 8243:8243
+      # - 5005:5005
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "9443" ]
       interval: 10s
