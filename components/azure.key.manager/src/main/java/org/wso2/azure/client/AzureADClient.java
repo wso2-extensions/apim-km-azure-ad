@@ -187,20 +187,19 @@ public class AzureADClient extends AbstractKeyManager {
         OAuthApplicationInfo oauthAppInfo = oauthAppRequest.getOAuthApplicationInfo();
 
         if (oauthAppInfo != null) {
-            ClientInformation appInfo = this.getClientInformation(oauthAppInfo);
+            ClientInformation appInfo = this.getClientInformationByClientId(oauthAppInfo.getClientId());
             String id = appInfo.getId();
 
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Updating application : %s:", appInfo.toString()));
             }
 
+            // Update the password every time application updates
             try {
-                // Update, Client does not send a body. 204 Status only
-                appClient.updateApplication(id, appInfo);
+                PasswordInfo pInfo = this.setPassword(id);
+                appInfo.setClientSecret(pInfo.getSecret());
 
-                // // Request the updated application,
-                ClientInformation clientInformation = appClient.getApplication(id);
-                return this.getOAuthApplicationInfo(clientInformation);
+                return this.getOAuthApplicationInfo(appInfo);
             } catch (KeyManagerClientException e) {
                 handleException("Error occurred while updating Azure AD Application", e);
                 return null;
