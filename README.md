@@ -126,6 +126,11 @@ We can also get this value by clicking the `set` link right next to the label. D
 
 Without this in the app,the token will be generate in a version 1 format and will not work with APIM KM due to failed signature.
 
+## Update the client_password.
+
+Update password is not supported by providing new one from the APIM.
+When ever the application is updated via APIM a new client_secret is set.
+
 ## License
 
 [Apache 2.0](LICENSE)
