@@ -131,6 +131,13 @@ Without this in the app,the token will be generate in a version 1 format and wil
 Update password is not supported by providing new one from the APIM.
 When ever the application is updated via APIM a new client_secret is set.
 
+```code
+Failed to add password. Error detail: Unable to save changes because the credential limit has been reached. Please delete a credential and try again.
+```
+
+If you see this message in logs or while updating the application several times, The issue is with limitation with Azure AD client_secret.
+At a given application max number of client_secrets can have is 2. Delete old one from AzureAD console web client.
+
 ## Adding existing key with APIM
 
 With the limitation on getting generated client_secrets after its generated, it not support to add existing keys from APIM.
