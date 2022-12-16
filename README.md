@@ -88,7 +88,7 @@ Start the API Manager server and log-in to the Admin portal to configure Azure A
   - Display Name: `Azure AD Key Manager`
   - Description _(optional)_
   - Key Manager Type: `Azure AD`
-- Grant Types: `client_credentials`
+- Grant Types: `client_credentials` (Only Use this grant type)
 - Connector Configurations
   - Microsoft Graph API Endpoint: paste the `Microsoft Graph API endpoint`
   - Client ID: paste the `Application (client) ID`
