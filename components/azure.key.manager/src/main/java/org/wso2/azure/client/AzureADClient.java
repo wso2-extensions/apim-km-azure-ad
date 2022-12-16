@@ -17,7 +17,6 @@
  */
 package org.wso2.azure.client;
 
-import com.ibm.icu.text.SimpleDateFormat;
 import feign.Feign;
 import feign.Feign.Builder;
 import feign.gson.GsonDecoder;
@@ -39,8 +38,8 @@ import org.wso2.carbon.apimgt.impl.kmclient.KMClientErrorDecoder;
 import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -127,7 +126,7 @@ public class AzureADClient extends AbstractKeyManager {
     private PasswordInfo setPassword(String id) throws KeyManagerClientException {
         PasswordCredential passwordCredential = new PasswordCredential();
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-        passwordCredential.setDisplayName("app_secret_"+timeStamp);
+        passwordCredential.setDisplayName("app_secret_" + timeStamp);
 
         PasswordInfo passwordInfo = new PasswordInfo();
         passwordInfo.setPasswordCredential(passwordCredential);
