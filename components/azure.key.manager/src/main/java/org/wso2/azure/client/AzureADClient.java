@@ -17,37 +17,31 @@
  */
 package org.wso2.azure.client;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
-import org.wso2.azure.client.model.ClientInformation;
-import org.wso2.azure.client.model.ClientInformationList;
-import org.wso2.azure.client.model.PasswordCredential;
-import org.wso2.azure.client.model.PasswordInfo;
-import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.api.model.API;
-import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
-import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
-import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
-import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
-import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
-import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
-import org.wso2.carbon.apimgt.api.model.Scope;
-import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
-import org.wso2.carbon.apimgt.impl.kmclient.KMClientErrorDecoder;
-import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
-import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import feign.Feign;
 import feign.Feign.Builder;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.azure.client.model.ClientInformation;
+import org.wso2.azure.client.model.ClientInformationList;
+import org.wso2.azure.client.model.PasswordCredential;
+import org.wso2.azure.client.model.PasswordInfo;
+import org.wso2.carbon.apimgt.api.APIManagementException;
+import org.wso2.carbon.apimgt.api.model.*;
+import org.wso2.carbon.apimgt.impl.APIConstants;
+import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
+import org.wso2.carbon.apimgt.impl.kmclient.KMClientErrorDecoder;
+import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
+import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
+
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 public class AzureADClient extends AbstractKeyManager {
 
@@ -106,9 +100,7 @@ public class AzureADClient extends AbstractKeyManager {
             try {
                 app = appClient.createApplication(appInfo);
                 if (app != null) {
-                    // Set password
-                    PasswordInfo pInfo = this.setPassword(app.getId());
-                    app.setClientSecret(pInfo.getSecret());
+                    this.addNewPassword(app);
 
                     // update Application ID URI, Otherwise the token will be in v1.
                     this.updateApplicationIDURI(app.getId(), app.getClientId());
@@ -126,9 +118,15 @@ public class AzureADClient extends AbstractKeyManager {
         return null;
     }
 
+    private void addNewPassword(ClientInformation app) throws KeyManagerClientException {
+        PasswordInfo pInfo = this.setPassword(app.getId());
+        app.setClientSecret(pInfo.getSecret());
+    }
+
     private PasswordInfo setPassword(String id) throws KeyManagerClientException {
         PasswordCredential passwordCredential = new PasswordCredential();
-        passwordCredential.setDisplayName("app_secret");
+        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
+        passwordCredential.setDisplayName("app_secret_" + timeStamp);
 
         PasswordInfo passwordInfo = new PasswordInfo();
         passwordInfo.setPasswordCredential(passwordCredential);
@@ -187,20 +185,18 @@ public class AzureADClient extends AbstractKeyManager {
         OAuthApplicationInfo oauthAppInfo = oauthAppRequest.getOAuthApplicationInfo();
 
         if (oauthAppInfo != null) {
-            ClientInformation appInfo = this.getClientInformation(oauthAppInfo);
+            ClientInformation appInfo = this.getClientInformationByClientId(oauthAppInfo.getClientId());
             String id = appInfo.getId();
 
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Updating application : %s:", appInfo.toString()));
             }
 
+            // Update the password every time application updates
             try {
-                // Update, Client does not send a body. 204 Status only
-                appClient.updateApplication(id, appInfo);
+                this.addNewPassword(appInfo);
 
-                // // Request the updated application,
-                ClientInformation clientInformation = appClient.getApplication(id);
-                return this.getOAuthApplicationInfo(clientInformation);
+                return this.getOAuthApplicationInfo(appInfo);
             } catch (KeyManagerClientException e) {
                 handleException("Error occurred while updating Azure AD Application", e);
                 return null;

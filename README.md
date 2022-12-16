@@ -88,7 +88,7 @@ Start the API Manager server and log-in to the Admin portal to configure Azure A
   - Display Name: `Azure AD Key Manager`
   - Description _(optional)_
   - Key Manager Type: `Azure AD`
-- Grant Types: `client_credentials`
+- Grant Types: `client_credentials` (Only Use this grant type)
 - Connector Configurations
   - Microsoft Graph API Endpoint: paste the `Microsoft Graph API endpoint`
   - Client ID: paste the `Application (client) ID`
@@ -125,6 +125,22 @@ api://<Application (client) ID>
 We can also get this value by clicking the `set` link right next to the label. Default value is what we will see above.
 
 Without this in the app,the token will be generate in a version 1 format and will not work with APIM KM due to failed signature.
+
+## Update the client_password.
+
+Update password is not supported by providing new one from the APIM.
+When ever the application is updated via APIM a new client_secret is set.
+
+```code
+Failed to add password. Error detail: Unable to save changes because the credential limit has been reached. Please delete a credential and try again.
+```
+
+If you see this message in logs or while updating the application several times, The issue is with limitation with Azure AD client_secret.
+At a given application max number of client_secrets can have is 2. Delete old one from AzureAD console web client.
+
+## Adding existing key with APIM
+
+With the limitation on getting generated client_secrets after its generated, it not support to add existing keys from APIM.
 
 ## License
 
