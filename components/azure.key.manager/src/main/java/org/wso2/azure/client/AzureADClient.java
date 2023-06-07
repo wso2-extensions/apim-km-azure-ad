@@ -151,6 +151,10 @@ public class AzureADClient extends AbstractKeyManager {
             oauthAppInfo.setClientSecret(appInfo.getClientSecret());
         }
 
+        if (StringUtils.isNotEmpty(appInfo.getAppName())) {
+            oauthAppInfo.addParameter(ApplicationConstants.OAUTH_CLIENT_NAME, appInfo.getAppName());
+        }
+
         oauthAppInfo.addParameter(ApplicationConstants.OAUTH_CLIENT_GRANT,
                 AzureADConstants.CLIENT_CREDENTIALS_GRANT_TYPE);
 
