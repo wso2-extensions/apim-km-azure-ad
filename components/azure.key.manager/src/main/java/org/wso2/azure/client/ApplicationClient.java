@@ -47,6 +47,13 @@ public interface ApplicationClient {
 	public void deleteApplication(@Param("id") String id) throws KeyManagerClientException;
 
 	/***
+	 * @param id Application ID
+	 * @throws KeyManagerClientException If application retrieval failed
+	 */
+	@RequestLine("GET /v1.0/applications(appId='{appid}')")
+	public ClientInformation getApplicationByAppId(@Param("appid") String id) throws KeyManagerClientException;
+
+	/***
 	 * 
 	 * @param id this is the clientId of the application
 	 * @return Client information

@@ -19,6 +19,7 @@ package org.wso2.azure.client;
 
 import feign.Feign;
 import feign.Feign.Builder;
+import feign.Logger;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 import feign.okhttp.OkHttpClient;
@@ -82,7 +83,7 @@ public class AzureADClient extends AbstractKeyManager {
                 .encoder(new GsonEncoder())
                 .decoder(new GsonDecoder())
                 .errorDecoder(new KMClientErrorDecoder())
-                .logger(new Slf4jLogger());
+                .logger(new Slf4jLogger(ApplicationClient.class)).logLevel(Logger.Level.FULL);
     }
 
     @Override
@@ -224,12 +225,10 @@ public class AzureADClient extends AbstractKeyManager {
     private ClientInformation getClientInformationByClientId(String clientId) throws APIManagementException {
         ClientInformation client = null;
         try {
-            ClientInformationList list = appClient.searchByAppId(clientId);
-            if (list != null && list.getValue().size() > 0) {
-                client = list.getValue().get(0);
-            }
-        } catch (KeyManagerClientException e1) {
-            handleException("Error occurred while searching Azure AD Application", e1);
+            client =  appClient.getApplicationByAppId(clientId);
+
+        } catch (KeyManagerClientException e1 ) {
+            handleException("Azure AD Application not found for the given consumer key " + clientId + " ", e1);
         }
         return client;
     }
