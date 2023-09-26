@@ -57,6 +57,13 @@ public interface ApplicationClient {
 	public ClientInformationList searchByAppId(@Param("appId") String id) throws KeyManagerClientException;;
 
 	/***
+	 * @param id Application ID
+	 * @throws KeyManagerClientException If application retrieval failed
+	 */
+	@RequestLine("GET /v1.0/applications(appId='{appid}')")
+	public ClientInformation getApplicationByAppId(@Param("appid") String id) throws KeyManagerClientException;
+
+	/***
 	 * 
 	 * @return Client Information
 	 * @throws KeyManagerClientException If get test applications failed
