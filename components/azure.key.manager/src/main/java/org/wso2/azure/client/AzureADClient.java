@@ -263,11 +263,16 @@ public class AzureADClient extends AbstractKeyManager {
         String consumerKey = oAuthAppRequest.getOAuthApplicationInfo().getClientId();
         OAuthApplicationInfo clientInfo = null;
         if (StringUtils.isNotBlank(consumerKey)) {
-            try{
-            clientInfo = this.getOAuthApplicationInfo(appClient.getApplicationByAppId(consumerKey));
+            try {
+                ClientInformation clientInformation = appClient.getApplicationByAppId(consumerKey);
+                if ( clientInformation != null ) {
+                    clientInfo = this.getOAuthApplicationInfo(clientInformation);
+                } else {
+                    throw new APIManagementException( "Something went wrong while getting OAuth application for given consumer key " + consumerKey + " " );
+                }
             } catch (KeyManagerClientException e1 ) {
-            handleException("Azure AD Application not found for the given consumer key " + consumerKey + " ", e1);
-        }
+                handleException("Azure AD Application not found for the given consumer key " + consumerKey + " ", e1);
+            }
             if (clientInfo == null) {
                 String msg = "Something went wrong while getting OAuth application for given consumer key "
                         + consumerKey;
