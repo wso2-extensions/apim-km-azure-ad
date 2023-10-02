@@ -37,6 +37,7 @@ import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.KMClientErrorDecoder;
 import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
+import feign.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -82,7 +83,7 @@ public class AzureADClient extends AbstractKeyManager {
                 .encoder(new GsonEncoder())
                 .decoder(new GsonDecoder())
                 .errorDecoder(new KMClientErrorDecoder())
-                .logger(new Slf4jLogger());
+                .logger(new Slf4jLogger(ApplicationClient.class)).logLevel(Logger.Level.FULL);
     }
 
     @Override
@@ -260,9 +261,18 @@ public class AzureADClient extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         String consumerKey = oAuthAppRequest.getOAuthApplicationInfo().getClientId();
-
+        OAuthApplicationInfo clientInfo = null;
         if (StringUtils.isNotBlank(consumerKey)) {
-            OAuthApplicationInfo clientInfo = retrieveApplication(consumerKey);
+            try {
+                ClientInformation clientInformation = appClient.getApplicationByAppId(consumerKey);
+                if (clientInformation != null) {
+                    clientInfo = this.getOAuthApplicationInfo(clientInformation);
+                } else {
+                    throw new APIManagementException( "Something went wrong while getting OAuth application for given consumer key " + consumerKey + " " );
+                }
+            } catch (KeyManagerClientException e1 ) {
+                handleException("Azure AD Application not found for the given consumer key " + consumerKey + " ", e1);
+            }
             if (clientInfo == null) {
                 String msg = "Something went wrong while getting OAuth application for given consumer key "
                         + consumerKey;
