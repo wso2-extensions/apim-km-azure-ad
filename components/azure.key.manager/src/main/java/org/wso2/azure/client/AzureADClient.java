@@ -265,7 +265,7 @@ public class AzureADClient extends AbstractKeyManager {
         if (StringUtils.isNotBlank(consumerKey)) {
             try {
                 ClientInformation clientInformation = appClient.getApplicationByAppId(consumerKey);
-                if ( clientInformation != null ) {
+                if (clientInformation != null) {
                     clientInfo = this.getOAuthApplicationInfo(clientInformation);
                 } else {
                     throw new APIManagementException( "Something went wrong while getting OAuth application for given consumer key " + consumerKey + " " );
