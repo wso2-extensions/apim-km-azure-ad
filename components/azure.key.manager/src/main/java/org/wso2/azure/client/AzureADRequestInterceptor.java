@@ -26,14 +26,16 @@ import feign.RequestTemplate;
 public class AzureADRequestInterceptor implements RequestInterceptor {
 
     private AccessTokenGenerator accessTokenGenerator;
+    private String defaultScope;
 
-    public AzureADRequestInterceptor(AccessTokenGenerator accessTokenGenerator) {
+    public AzureADRequestInterceptor(AccessTokenGenerator accessTokenGenerator, String defaultScope) {
         this.accessTokenGenerator = accessTokenGenerator;
+        this.defaultScope = defaultScope;
     }
 
     @Override
     public void apply(RequestTemplate requestTemplate) {
-        String[] scopes = { AzureADConstants.MICROSOFT_DEFAULT_SCOPE };
+        String[] scopes = { defaultScope };
         String accessToken = accessTokenGenerator.getAccessToken(scopes);
         requestTemplate
                 .header(APIConstants.AUTHORIZATION_HEADER_DEFAULT, APIConstants.AUTHORIZATION_BEARER + accessToken);

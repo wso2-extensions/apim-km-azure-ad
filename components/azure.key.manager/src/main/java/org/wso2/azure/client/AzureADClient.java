@@ -63,13 +63,14 @@ public class AzureADClient extends AbstractKeyManager {
         String appClientSecret = (String) this.configuration.getParameter(AzureADConstants.AD_APP_CLIENT_SECRET);
         String revokeEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
         String graphApiEndpoint = (String) this.configuration.getParameter(AzureADConstants.GRAPH_API_ENDPOINT);
+        String graphApiDefaultScope = graphApiEndpoint + AzureADConstants.GRAPH_API_DEFAULT_SCOPE_SUFFIX;
 
         tokenEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
 
         AccessTokenGenerator accessTokenGenerator = new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, appClientId,
                 appClientSecret);
 
-        AzureADRequestInterceptor appInterceptor = new AzureADRequestInterceptor(accessTokenGenerator);
+        AzureADRequestInterceptor appInterceptor = new AzureADRequestInterceptor(accessTokenGenerator, graphApiDefaultScope);
 
         appClient = this.buildFeignClient(new OkHttpClient(), appInterceptor)
                 .target(ApplicationClient.class, graphApiEndpoint);
