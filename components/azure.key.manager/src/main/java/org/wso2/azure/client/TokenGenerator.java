@@ -21,7 +21,6 @@ import java.io.IOException;
 
 import org.wso2.azure.client.model.AccessTokenResponse;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.api.ExceptionCodes;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 
@@ -54,10 +53,6 @@ public class TokenGenerator {
         Call call = client.newCall(request);
 
         try (Response response = call.execute()) {
-            if (response.code() == 401) {
-                throw new APIManagementException("Invalid client secret provided, Please try again",
-                        ExceptionCodes.USER_NOT_AUTHENTICATED);
-            }
             return new Gson().fromJson(response.body().string(), AccessTokenResponse.class);
         } catch (IOException e) {
             throw new APIManagementException("Error Getting access token for clientId " + clientId);
