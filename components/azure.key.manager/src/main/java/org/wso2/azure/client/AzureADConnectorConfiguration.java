@@ -20,12 +20,15 @@ package org.wso2.azure.client;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.osgi.service.component.annotations.Component;
 import org.wso2.carbon.apimgt.api.model.ConfigurationDto;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConnectorConfiguration;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
+
+import static org.wso2.azure.client.AzureADConstants.AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS;
 
 @Component(name = "azuread.configuration.component", immediate = true, service = KeyManagerConnectorConfiguration.class)
 public class AzureADConnectorConfiguration implements KeyManagerConnectorConfiguration {
@@ -54,6 +57,21 @@ public class AzureADConnectorConfiguration implements KeyManagerConnectorConfigu
                         "Microsoft Graph API Endpoint Version", "select",
                         "Microsoft's Graph API Endpoint Version", "v1.0", true,
                         false, Arrays.asList(versions), false));
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION,
+                        "Requested Access Token Version",
+                        "options",
+                        "Select the requested access token version",
+                        "v1.0",
+                        false,
+                        false,
+                        AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS.keySet().stream()
+                                .sorted()
+                                .collect(Collectors.toList()),
+                        false,
+                        true
+                ));
         configurationDtoList
                 .add(new ConfigurationDto(AzureADConstants.AD_APP_CLIENT_ID, "Client ID", "input",
                         "Azure AD App Client ID", "", true,

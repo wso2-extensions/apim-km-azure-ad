@@ -17,6 +17,10 @@
  */
 package org.wso2.azure.client;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class AzureADConstants {
 
     public static final String AZURE = "Azure AD";
@@ -25,6 +29,7 @@ public class AzureADConstants {
 
     public static final String GRAPH_API_ENDPOINT = "microsoft_graph_api_endpoint";
     public static final String GRAPH_API_ENDPOINT_VALUE = "https://graph.microsoft.com";
+    public static final String AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION = "azure_ad_requested_access_token_version";
     public static final String GRAPH_API_ENDPOINT_VERSION = "v1.0";
     // public static final String APP_ID = "appid";
     public static final String AZP = "azp";
@@ -42,4 +47,12 @@ public class AzureADConstants {
     public static final String BASIC = "Basic ";
     public static final String CONTENT_TYPE_URL_ENCODED = "application/x-www-form-urlencoded";
 
+    public static final int AZURE_AD_DEFAULT_REQUESTED_ACCESS_TOKEN_VERSION = 1;
+    public static final Map<String, Integer> AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS;
+    static {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("v1.0", 1);
+        map.put("v2.0", 2);
+        AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS = Collections.unmodifiableMap(map);
+    }
 }
