@@ -46,10 +46,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import static org.wso2.azure.client.AzureADConstants.AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS;
-import static org.wso2.azure.client.AzureADConstants.AZURE_AD_DEFAULT_REQUESTED_ACCESS_TOKEN_VERSION;
-import static org.wso2.azure.client.AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION;
-
 public class AzureADClient extends AbstractKeyManager {
 
     private static final Log log = LogFactory.getLog(AzureADClient.class);
@@ -70,7 +66,8 @@ public class AzureADClient extends AbstractKeyManager {
         String appClientSecret = (String) this.configuration.getParameter(AzureADConstants.AD_APP_CLIENT_SECRET);
         String revokeEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
         String graphApiEndpoint = (String) this.configuration.getParameter(AzureADConstants.GRAPH_API_ENDPOINT);
-        requestedAccessTokenVersion = (String) configuration.getParameter(AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION);
+        requestedAccessTokenVersion =
+                (String) this.configuration.getParameter(AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION);
         String graphApiDefaultScope = graphApiEndpoint + AzureADConstants.GRAPH_API_DEFAULT_SCOPE_SUFFIX;
 
         tokenEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
@@ -211,9 +208,9 @@ public class AzureADClient extends AbstractKeyManager {
     private int validateAndGetRequestedAccessTokenVersion(String requestedAccessTokenVersion)
             throws APIManagementException {
         if (requestedAccessTokenVersion == null) {
-            return AZURE_AD_DEFAULT_REQUESTED_ACCESS_TOKEN_VERSION;
+            return AzureADConstants.AZURE_AD_DEFAULT_REQUESTED_ACCESS_TOKEN_VERSION;
         }
-        Integer version = AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS.get(requestedAccessTokenVersion);
+        Integer version = AzureADConstants.AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS.get(requestedAccessTokenVersion);
         if (version != null) {
             return version;
         }
