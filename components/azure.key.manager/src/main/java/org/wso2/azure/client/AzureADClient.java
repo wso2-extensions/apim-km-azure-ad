@@ -30,6 +30,7 @@ import org.wso2.azure.client.model.ClientInformation;
 import org.wso2.azure.client.model.ClientInformationList;
 import org.wso2.azure.client.model.PasswordCredential;
 import org.wso2.azure.client.model.PasswordInfo;
+import org.wso2.azure.client.model.ServicePrincipalRequest;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.*;
 import org.wso2.carbon.apimgt.impl.APIConstants;
@@ -107,6 +108,9 @@ public class AzureADClient extends AbstractKeyManager {
                     // update Application ID URI, Otherwise the token will be in v1.
                     this.updateApplicationIDURI(app.getId(), app.getClientId());
 
+                    // Create servicePrincipal
+                    this.createServicePrincipalForApplication(app.getClientId());
+
                     return getOAuthApplicationInfo(app);
                 } else {
                     throw new APIManagementException("Client Application creation failed");
@@ -142,6 +146,12 @@ public class AzureADClient extends AbstractKeyManager {
         String applicationIdUri = String.format(AzureADConstants.API_ID_URI_TEMPLATE, appId);
         info.setIdentifierUris(new String[] { applicationIdUri });
         appClient.updateApplication(id, info);
+    }
+
+    private void createServicePrincipalForApplication(String appId) throws KeyManagerClientException {
+        ServicePrincipalRequest servicePrincipalRequest = new ServicePrincipalRequest();
+        servicePrincipalRequest.setAppId(appId);
+        appClient.createServicePrincipal(servicePrincipalRequest);
     }
 
     private OAuthApplicationInfo getOAuthApplicationInfo(ClientInformation appInfo) {
