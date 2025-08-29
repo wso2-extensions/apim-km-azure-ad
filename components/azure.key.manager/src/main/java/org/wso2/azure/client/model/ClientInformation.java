@@ -33,6 +33,9 @@ public class ClientInformation {
     @SerializedName("identifierUris")
     private String[] identifierUris;
 
+    @SerializedName("api")
+    private ApiConfiguration api;
+
     private String clientSecret;
 
     public String getId() {
@@ -75,9 +78,18 @@ public class ClientInformation {
         this.identifierUris = identifierUris;
     }
 
+    public ApiConfiguration getApi() {
+        return api;
+    }
+
+    public void setApi(ApiConfiguration api) {
+        this.api = api;
+    }
+
     @Override
     public String toString() {
-        return "ClientInformation [id=" + id + ", clientId=" + clientId + ", appName=" + appName + "]";
+        return "ClientInformation [id=" + id + ", clientId=" + clientId + ", appName=" + appName +
+                ", api=" + api + "]";
     }
 
 }

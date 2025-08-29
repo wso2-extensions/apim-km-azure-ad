@@ -20,6 +20,7 @@ package org.wso2.azure.client;
 import org.wso2.azure.client.model.ClientInformation;
 import org.wso2.azure.client.model.ClientInformationList;
 import org.wso2.azure.client.model.PasswordInfo;
+import org.wso2.azure.client.model.ServicePrincipalRequest;
 import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 
 import feign.Headers;
@@ -75,6 +76,11 @@ public interface ApplicationClient {
 	@RequestLine("PATCH /v1.0/applications/{id}")
 	@Headers("Content-Type: application/json")
 	public void updateApplication(@Param("id") String id, ClientInformation applicationInfo)
+			throws KeyManagerClientException;
+
+	@RequestLine("POST /v1.0/servicePrincipals")
+	@Headers("Content-Type: application/json")
+	public void createServicePrincipal(ServicePrincipalRequest servicePrincipalRequest)
 			throws KeyManagerClientException;
 
 	@RequestLine("POST /v1.0/applications/{id}/addPassword")

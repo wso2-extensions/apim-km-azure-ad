@@ -26,10 +26,12 @@ import feign.slf4j.Slf4jLogger;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.azure.client.model.ApiConfiguration;
 import org.wso2.azure.client.model.ClientInformation;
 import org.wso2.azure.client.model.ClientInformationList;
 import org.wso2.azure.client.model.PasswordCredential;
 import org.wso2.azure.client.model.PasswordInfo;
+import org.wso2.azure.client.model.ServicePrincipalRequest;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.*;
 import org.wso2.carbon.apimgt.impl.APIConstants;
@@ -54,6 +56,7 @@ public class AzureADClient extends AbstractKeyManager {
     private ApplicationClient appClient;
 
     private String tokenEndpoint;
+    private String requestedAccessTokenVersion;
 
     @Override
     public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
@@ -63,6 +66,8 @@ public class AzureADClient extends AbstractKeyManager {
         String appClientSecret = (String) this.configuration.getParameter(AzureADConstants.AD_APP_CLIENT_SECRET);
         String revokeEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
         String graphApiEndpoint = (String) this.configuration.getParameter(AzureADConstants.GRAPH_API_ENDPOINT);
+        requestedAccessTokenVersion =
+                (String) this.configuration.getParameter(AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION);
         String graphApiDefaultScope = graphApiEndpoint + AzureADConstants.GRAPH_API_DEFAULT_SCOPE_SUFFIX;
 
         tokenEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
@@ -107,6 +112,9 @@ public class AzureADClient extends AbstractKeyManager {
                     // update Application ID URI, Otherwise the token will be in v1.
                     this.updateApplicationIDURI(app.getId(), app.getClientId());
 
+                    // Create servicePrincipal
+                    this.createServicePrincipalForApplication(app.getClientId());
+
                     return getOAuthApplicationInfo(app);
                 } else {
                     throw new APIManagementException("Client Application creation failed");
@@ -144,6 +152,12 @@ public class AzureADClient extends AbstractKeyManager {
         appClient.updateApplication(id, info);
     }
 
+    private void createServicePrincipalForApplication(String appId) throws KeyManagerClientException {
+        ServicePrincipalRequest servicePrincipalRequest = new ServicePrincipalRequest();
+        servicePrincipalRequest.setAppId(appId);
+        appClient.createServicePrincipal(servicePrincipalRequest);
+    }
+
     private OAuthApplicationInfo getOAuthApplicationInfo(ClientInformation appInfo) {
         OAuthApplicationInfo oauthAppInfo = new OAuthApplicationInfo();
         oauthAppInfo.setClientName(appInfo.getAppName());
@@ -166,7 +180,7 @@ public class AzureADClient extends AbstractKeyManager {
         return oauthAppInfo;
     }
 
-    private ClientInformation getClientInformation(OAuthApplicationInfo oauthAppInfo) {
+    private ClientInformation getClientInformation(OAuthApplicationInfo oauthAppInfo) throws APIManagementException {
         ClientInformation clientInformation = new ClientInformation();
         clientInformation.setAppName(oauthAppInfo.getClientName());
         Object id = oauthAppInfo.getParameter(AzureADConstants.OBJECT_ID);
@@ -183,7 +197,25 @@ public class AzureADClient extends AbstractKeyManager {
             clientInformation.setClientSecret(oauthAppInfo.getClientSecret());
         }
 
+        ApiConfiguration apiConfiguration = new ApiConfiguration();
+        int requestedAccessTokenVersion = validateAndGetRequestedAccessTokenVersion(this.requestedAccessTokenVersion);
+        apiConfiguration.setRequestedAccessTokenVersion(requestedAccessTokenVersion);
+        clientInformation.setApi(apiConfiguration);
+
         return clientInformation;
+    }
+
+    private int validateAndGetRequestedAccessTokenVersion(String requestedAccessTokenVersion)
+            throws APIManagementException {
+        if (requestedAccessTokenVersion == null) {
+            return AzureADConstants.AZURE_AD_DEFAULT_REQUESTED_ACCESS_TOKEN_VERSION;
+        }
+        Integer version = AzureADConstants.AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS.get(requestedAccessTokenVersion);
+        if (version != null) {
+            return version;
+        }
+        throw new APIManagementException("Invalid property azure_ad_requested_access_token_version: " +
+                requestedAccessTokenVersion);
     }
 
     @Override
