@@ -156,6 +156,9 @@ public class AzureADClient extends AbstractKeyManager {
         ServicePrincipalRequest servicePrincipalRequest = new ServicePrincipalRequest();
         servicePrincipalRequest.setAppId(appId);
         appClient.createServicePrincipal(servicePrincipalRequest);
+        if (log.isDebugEnabled()) {
+            log.debug("Service Principal created for the application id : " + appId);
+        }
     }
 
     private OAuthApplicationInfo getOAuthApplicationInfo(ClientInformation appInfo) {
