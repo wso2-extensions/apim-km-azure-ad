@@ -57,6 +57,8 @@ public class AzureADClient extends AbstractKeyManager {
 
     private String tokenEndpoint;
     private String requestedAccessTokenVersion;
+    private long pollingInitialDelayMs;
+    private long pollingMaxWaitTimeMs;
 
     @Override
     public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
@@ -66,8 +68,8 @@ public class AzureADClient extends AbstractKeyManager {
         String appClientSecret = (String) this.configuration.getParameter(AzureADConstants.AD_APP_CLIENT_SECRET);
         String revokeEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
         String graphApiEndpoint = (String) this.configuration.getParameter(AzureADConstants.GRAPH_API_ENDPOINT);
-        requestedAccessTokenVersion =
-                (String) this.configuration.getParameter(AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION);
+        requestedAccessTokenVersion = (String) this.configuration
+                .getParameter(AzureADConstants.AZURE_AD_REQUESTED_ACCESS_TOKEN_VERSION);
         String graphApiDefaultScope = graphApiEndpoint + AzureADConstants.GRAPH_API_DEFAULT_SCOPE_SUFFIX;
 
         tokenEndpoint = (String) this.configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
@@ -75,10 +77,25 @@ public class AzureADClient extends AbstractKeyManager {
         AccessTokenGenerator accessTokenGenerator = new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, appClientId,
                 appClientSecret);
 
-        AzureADRequestInterceptor appInterceptor = new AzureADRequestInterceptor(accessTokenGenerator, graphApiDefaultScope);
+        AzureADRequestInterceptor appInterceptor = new AzureADRequestInterceptor(accessTokenGenerator,
+                graphApiDefaultScope);
 
         appClient = this.buildFeignClient(new OkHttpClient(), appInterceptor)
                 .target(ApplicationClient.class, graphApiEndpoint);
+
+        // Load polling configuration with defaults
+        String initialDelayStr = (String) this.configuration.getParameter(
+                AzureADConstants.AZURE_AD_APPLICATION_POLLING_INITIAL_DELAY_MS_CONFIG);
+        pollingInitialDelayMs = initialDelayStr != null ? Long.parseLong(initialDelayStr)
+                : Long.parseLong(AzureADConstants.APPLICATION_POLLING_INITIAL_DELAY_MS);
+
+        String maxWaitTimeStr = (String) this.configuration.getParameter(
+                AzureADConstants.AZURE_AD_APPLICATION_POLLING_MAX_WAIT_TIME_MS_CONFIG);
+        pollingMaxWaitTimeMs = maxWaitTimeStr != null ? Long.parseLong(maxWaitTimeStr)
+                : Long.parseLong(AzureADConstants.APPLICATION_POLLING_MAX_WAIT_TIME_MS);
+
+        log.debug(String.format("Polling configuration: initialDelayMs=%d, maxWaitTimeMs=%d",
+                pollingInitialDelayMs, pollingMaxWaitTimeMs));
     }
 
     private Builder buildFeignClient(
@@ -128,12 +145,76 @@ public class AzureADClient extends AbstractKeyManager {
         return null;
     }
 
-    private void addNewPassword(ClientInformation app) throws KeyManagerClientException {
-        PasswordInfo pInfo = this.setPassword(app.getId());
+    private void addNewPassword(ClientInformation app) throws KeyManagerClientException, APIManagementException {
+        PasswordInfo pInfo = this.setPasswordWithPolling(app.getId());
         app.setClientSecret(pInfo.getSecret());
     }
 
-    private PasswordInfo setPassword(String id) throws KeyManagerClientException {
+    private <T> T withPolling(PollingOperation<T> operation, String operationDescription, String id)
+            throws APIManagementException {
+        long startTime = System.currentTimeMillis();
+        long delay = pollingInitialDelayMs;
+        int attemptCount = 0;
+        KeyManagerClientException lastException = null;
+
+        while (System.currentTimeMillis() - startTime < pollingMaxWaitTimeMs) {
+            try {
+                attemptCount++;
+                T result = operation.run();  // Execute the lambda
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("%s succeeded for %s after %d attempts (%.2fs elapsed).",
+                            operationDescription, id, attemptCount, (System.currentTimeMillis() - startTime) / 1000.0));
+                }
+                return result;
+            } catch (KeyManagerClientException e) {
+                lastException = e;
+                long elapsedTime = System.currentTimeMillis() - startTime;
+
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("%s failed for %s. Attempt %d (%.2fs elapsed). Error: %s",
+                            operationDescription, id, attemptCount, elapsedTime / 1000.0, e.getMessage()));
+                }
+
+                if (elapsedTime + delay >= pollingMaxWaitTimeMs) {
+                    break;
+                }
+
+                try {
+                    Thread.sleep(delay);
+                    delay = Math.min(delay * 2, pollingMaxWaitTimeMs - elapsedTime);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new APIManagementException("Thread interrupted while waiting for " + operationDescription, ie);
+                }
+            }
+        }
+
+        long totalTime = System.currentTimeMillis() - startTime;
+        String errorMsg = String.format(
+                "%s failed for %s after %d attempts and %.2fs due to DC replication delays.",
+                operationDescription, id, attemptCount, totalTime / 1000.0);
+        log.error(errorMsg, lastException);
+        throw new APIManagementException(errorMsg, lastException);
+    }
+
+    @FunctionalInterface
+    private interface PollingOperation<T> {
+        T run() throws KeyManagerClientException;
+    }
+
+    /**
+     * Set password after polling to ensure that the application exists and is
+     * ready.
+     * Polls both the GET operation to verify existence and the addPassword
+     * operation itself.
+     *
+     * @param id Application object ID
+     * @return PasswordInfo containing the generated secret
+     * @throws KeyManagerClientException if password addition fails
+     * @throws APIManagementException    if application is not found after maximum
+     *                                   retries
+     */
+    private PasswordInfo setPasswordWithPolling(String id) throws APIManagementException {
         PasswordCredential passwordCredential = new PasswordCredential();
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
         passwordCredential.setDisplayName("app_secret_" + timeStamp);
@@ -141,24 +222,29 @@ public class AzureADClient extends AbstractKeyManager {
         PasswordInfo passwordInfo = new PasswordInfo();
         passwordInfo.setPasswordCredential(passwordCredential);
 
-        return appClient.addPassword(id, passwordInfo);
+        return withPolling(() -> appClient.addPassword(id, passwordInfo),
+                "Add password", id);
     }
 
-    private void updateApplicationIDURI(String id, String appId) throws KeyManagerClientException {
+    private void updateApplicationIDURI(String id, String appId) throws APIManagementException {
         ClientInformation info = new ClientInformation();
-        // Need to create Application ID URI. Used in default scope and
         String applicationIdUri = String.format(AzureADConstants.API_ID_URI_TEMPLATE, appId);
         info.setIdentifierUris(new String[] { applicationIdUri });
-        appClient.updateApplication(id, info);
+
+        withPolling(() -> {
+            appClient.updateApplication(id, info);
+            return null;
+        }, "Update Application ID URI", id);
     }
 
-    private void createServicePrincipalForApplication(String appId) throws KeyManagerClientException {
+    private void createServicePrincipalForApplication(String appId) throws APIManagementException {
         ServicePrincipalRequest servicePrincipalRequest = new ServicePrincipalRequest();
         servicePrincipalRequest.setAppId(appId);
-        appClient.createServicePrincipal(servicePrincipalRequest);
-        if (log.isDebugEnabled()) {
-            log.debug("Service Principal created for the application id : " + appId);
-        }
+
+        withPolling(() -> {
+            appClient.createServicePrincipal(servicePrincipalRequest);
+            return null;
+        }, "Create Service Principal", appId);
     }
 
     private OAuthApplicationInfo getOAuthApplicationInfo(ClientInformation appInfo) {
@@ -304,9 +390,11 @@ public class AzureADClient extends AbstractKeyManager {
                 if (clientInformation != null) {
                     clientInfo = this.getOAuthApplicationInfo(clientInformation);
                 } else {
-                    throw new APIManagementException( "Something went wrong while getting OAuth application for given consumer key " + consumerKey + " " );
+                    throw new APIManagementException(
+                            "Something went wrong while getting OAuth application for given consumer key " + consumerKey
+                                    + " ");
                 }
-            } catch (KeyManagerClientException e1 ) {
+            } catch (KeyManagerClientException e1) {
                 handleException("Azure AD Application not found for the given consumer key " + consumerKey + " ", e1);
             }
             if (clientInfo == null) {

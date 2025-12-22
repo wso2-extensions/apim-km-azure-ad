@@ -55,4 +55,10 @@ public class AzureADConstants {
         map.put("v2.0", 2);
         AZURE_AD_ALLOWED_ACCESS_TOKEN_VERSIONS = Collections.unmodifiableMap(map);
     }
+
+    // Polling configuration for handling DC replication delays
+    public static final String AZURE_AD_APPLICATION_POLLING_INITIAL_DELAY_MS_CONFIG = "polling_initial_delay_ms";
+    public static final String AZURE_AD_APPLICATION_POLLING_MAX_WAIT_TIME_MS_CONFIG = "polling_max_wait_time_ms";
+    public static final String APPLICATION_POLLING_INITIAL_DELAY_MS = "500";
+    public static final String APPLICATION_POLLING_MAX_WAIT_TIME_MS = "5000"; // 5 seconds
 }

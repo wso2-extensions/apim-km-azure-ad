@@ -68,8 +68,7 @@ public class AzureADConnectorConfiguration implements KeyManagerConnectorConfigu
                                 .sorted()
                                 .collect(Collectors.toList()),
                         false,
-                        true
-                ));
+                        true));
         configurationDtoList
                 .add(new ConfigurationDto(AzureADConstants.AD_APP_CLIENT_ID, "Client ID", "input",
                         "Azure AD App Client ID", "", true,
@@ -78,6 +77,33 @@ public class AzureADConnectorConfiguration implements KeyManagerConnectorConfigu
                 .add(new ConfigurationDto(AzureADConstants.AD_APP_CLIENT_SECRET, "Client Secret", "input",
                         "Azure AD App Client Secret", "", true,
                         true, Collections.emptyList(), false));
+
+        
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        AzureADConstants.AZURE_AD_APPLICATION_POLLING_INITIAL_DELAY_MS_CONFIG,
+                        "Initial Delay (in ms) for Application Polling",
+                        "input",
+                        "The initial time to wait before starting polling for Azure Application creation",
+                        AzureADConstants.APPLICATION_POLLING_INITIAL_DELAY_MS,
+                        false,
+                        false,
+                        Collections.emptyList(),
+                        false,
+                        false));
+        
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        AzureADConstants.AZURE_AD_APPLICATION_POLLING_MAX_WAIT_TIME_MS_CONFIG,
+                        "Maximum Waiting Time (in ms) for Application Polling",
+                        "input",
+                        "The maximum time to wait for Azure Application creation",
+                        AzureADConstants.APPLICATION_POLLING_MAX_WAIT_TIME_MS,
+                        false,
+                        false,
+                        Collections.emptyList(),
+                        false,
+                        false));
 
         return configurationDtoList;
     }
