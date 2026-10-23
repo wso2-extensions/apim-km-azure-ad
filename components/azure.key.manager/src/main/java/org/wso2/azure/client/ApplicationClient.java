@@ -53,7 +53,7 @@ public interface ApplicationClient {
 	 * @return Client information
 	 * @throws KeyManagerClientException If search by app id failed
 	 */
-	@RequestLine("GET /v1.0/applications?$search=\"appId:{appId}\"&ConsistencyLevel=eventual")
+	@RequestLine("GET /v1.0/applications?$search=\"appId:{appId}\"")
 	@Headers("ConsistencyLevel: eventual")
 	public ClientInformationList searchByAppId(@Param("appId") String id) throws KeyManagerClientException;;
 
@@ -69,7 +69,7 @@ public interface ApplicationClient {
 	 * @return Client Information
 	 * @throws KeyManagerClientException If get test applications failed
 	 */
-	@RequestLine("GET /v1.0/applications?$search=\"displayName:TEST\"&ConsistencyLevel=eventual&$select=id")
+	@RequestLine("GET /v1.0/applications?$search=\"displayName:TEST\"&$select=id")
 	@Headers("ConsistencyLevel: eventual")
 	public ClientInformationList getAllTestApplications() throws KeyManagerClientException;;
 
