@@ -124,13 +124,20 @@ public class AzureADClient extends AbstractKeyManager {
             try {
                 app = appClient.createApplication(appInfo);
                 if (app != null) {
-                    this.addNewPassword(app);
+                    try {
+                        this.addNewPassword(app);
 
-                    // update Application ID URI, Otherwise the token will be in v1.
-                    this.updateApplicationIDURI(app.getId(), app.getClientId());
+                        // update Application ID URI, Otherwise the token will be in v1.
+                        this.updateApplicationIDURI(app.getId(), app.getClientId());
 
-                    // Create servicePrincipal
-                    this.createServicePrincipalForApplication(app.getClientId());
+                        // Create servicePrincipal
+                        this.createServicePrincipalForApplication(app.getClientId());
+                    } catch (APIManagementException | KeyManagerClientException | RuntimeException e) {
+                        // The application already exists in Azure AD. Remove it so that a failed setup does not
+                        // leave an orphaned application (one without a secret or service principal) behind.
+                        deleteIncompleteApplication(app.getId());
+                        throw e;
+                    }
 
                     return getOAuthApplicationInfo(app);
                 } else {
@@ -143,6 +150,26 @@ public class AzureADClient extends AbstractKeyManager {
         }
 
         return null;
+    }
+
+    /**
+     * Deletes an Azure AD application whose setup did not complete after it was created.
+     * <p>
+     * A failure here is logged rather than thrown, so that the original setup error is the one reported.
+     *
+     * @param id Application object ID
+     */
+    private void deleteIncompleteApplication(String id) {
+        try {
+            withPolling(() -> {
+                appClient.deleteApplication(id);
+                return null;
+            }, "Delete incomplete application", id);
+            log.warn(String.format("Deleted Azure AD application %s because its setup did not complete.", id));
+        } catch (APIManagementException | RuntimeException e) {
+            log.error(String.format("Failed to delete Azure AD application %s after its setup did not complete. "
+                    + "It may need to be removed manually from the Azure AD tenant.", id), e);
+        }
     }
 
     private void addNewPassword(ClientInformation app) throws KeyManagerClientException, APIManagementException {
